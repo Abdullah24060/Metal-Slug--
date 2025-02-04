@@ -12,11 +12,11 @@ struct Player
     float PHealth;
     Rectangle PCollider;
 };
-
+/// MY NAME IS ABDULAH THE LOVE OF HAMZA 
 struct Bullet
 {
     int x, y;
-    Texture2D Image;
+    Texture2D BImage;
     bool active;
     Rectangle Collider;
 };
@@ -24,9 +24,12 @@ struct Bullet
 struct Enemy
 {
     int x, y;
+    int Espeed;
     Rectangle ECollider;
     float EHealth;
     Bullet bullets;
+    Texture2D EImage;
+    void (*fptr)(Enemy);
 };
 
 struct BG
