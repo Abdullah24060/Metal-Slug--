@@ -26,5 +26,38 @@
     <Image Include="Back2.png">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="Enemy.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="PlayerBody.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Leg1.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Leg2.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Leg3.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Leg4.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Leg5.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Title.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Enemy_Man.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Heli.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Bullet.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

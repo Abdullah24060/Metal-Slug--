@@ -1,4 +1,6 @@
 ﻿  Metal Slug Project OOP.cpp
+D:\Coding VS Community\Metal Slug Project OOP\Metal Slug Project OOP\Metal Slug Project OOP.cpp(213,19): warning C4244: '+=': conversion from 'float' to 'int', possible loss of data
+D:\Coding VS Community\Metal Slug Project OOP\Metal Slug Project OOP\Metal Slug Project OOP.cpp(214,19): warning C4244: '+=': conversion from 'float' to 'int', possible loss of data
   Metal Slug Project OOP.vcxproj -> D:\Coding VS Community\Metal Slug Project OOP\x64\Debug\Metal Slug Project OOP.exe
   'pwsh.exe' is not recognized as an internal or external command,
   operable program or batch file.

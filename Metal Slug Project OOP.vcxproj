@@ -132,6 +132,17 @@
   <ItemGroup>
     <Image Include="Back1.png" />
     <Image Include="Back2.png" />
+    <Image Include="Bullet.png" />
+    <Image Include="Enemy.png" />
+    <Image Include="Enemy_Man.png" />
+    <Image Include="Heli.png" />
+    <Image Include="Leg1.png" />
+    <Image Include="Leg2.png" />
+    <Image Include="Leg3.png" />
+    <Image Include="Leg4.png" />
+    <Image Include="Leg5.png" />
+    <Image Include="PlayerBody.png" />
+    <Image Include="Title.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
