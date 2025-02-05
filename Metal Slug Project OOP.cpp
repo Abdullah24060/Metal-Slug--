@@ -16,6 +16,12 @@ struct Player
     int PHeight[2], PWidth[2];
 };
 
+struct Shield {
+    float health = 100.0f;
+    Texture2D SImage;
+    bool active = false;
+};
+
 struct Bullet
 {
     int x, y;
@@ -37,6 +43,7 @@ struct Enemy
     int EHeight, EWidth;
     int timer;
     int bulletFrame;
+    int bulletsActive = 0;
 };
 
 struct BG
@@ -99,6 +106,7 @@ void HealthBar(Player& P)
 // **********************MAINS************
 int main()
 {
+    srand(time(0));
     InitAudioDevice();
     Player P;
     Bullet bullets[MAX_BULLETS] = {};
@@ -116,6 +124,11 @@ int main()
     Texture2D bg1, bg2, Title;
     bool GameStart = false;
     int score = 0;
+
+    Shield S;
+    S.health = 100.0f;
+    S.active = false;
+
 
     InitWindow(ScreenWidth, ScreenHeight, "METAL SLUG");
 
@@ -149,8 +162,9 @@ int main()
         enemyManBullets[i].active = false;
     }
 
-
+    S.SImage = LoadTexture("Shield.png");
     LoadPlayerImages(P);
+
 
 
 
@@ -225,6 +239,11 @@ int main()
         DrawTexture(E.EImage, E.x, E.y, WHITE);
         DrawTexture(EnemyMan.EImage, EnemyMan.x, EnemyMan.y, WHITE);
         DrawTexture(Helicopter.EImage, Helicopter.x, Helicopter.y, WHITE);
+        if (S.health > 0) {
+            DrawRectangle(20, 50, 200, 20, GRAY);
+            DrawRectangle(20, 50, (int)(200 * (S.health / 100.0f)), 20, BLUE);
+        }
+
 
 
         E.x--;
@@ -234,28 +253,26 @@ int main()
 
         if (E.x < ScreenWidth) {
             if (E.timer != 80) {
-
                 E.timer++;
-
             }
             else {
-
-
-                if (E.bulletFrame % 10 == 0 && E.bulletFrame / 10 < MAX_BULLETS) {
-
-
-                    enemyBullets[E.bulletFrame / 10].active = true;
-                    enemyBullets[E.bulletFrame / 10].x = E.x;
-                    enemyBullets[E.bulletFrame / 10].y = E.y;
-
+                if (E.bulletsActive < MAX_BULLETS && E.bulletFrame >= (rand() % 81 + 10)) {
+                    for (int i = 0; i < MAX_BULLETS; i++) {
+                        if (!enemyBullets[i].active) {
+                            enemyBullets[i].active = true;
+                            enemyBullets[i].x = E.x;
+                            enemyBullets[i].y = E.y;
+                            E.bulletsActive++;
+                            break;
+                        }
+                    }
+                    E.bulletFrame = 0;
                 }
                 E.bulletFrame++;
-
-                if (E.bulletFrame >= MAX_BULLETS * 10) {
-
+                if (E.bulletsActive >= MAX_BULLETS) {
                     E.timer = 0;
                     E.bulletFrame = 0;
-
+                    E.bulletsActive = 0;
                 }
             }
         }
@@ -265,21 +282,23 @@ int main()
                 EnemyMan.timer++;
             }
             else {
-
-
-                if (EnemyMan.bulletFrame % 10 == 0 && EnemyMan.bulletFrame / 10 < MAX_BULLETS) {
-                    enemyManBullets[EnemyMan.bulletFrame / 10].active = true;
-                    enemyManBullets[EnemyMan.bulletFrame / 10].x = EnemyMan.x;
-                    enemyManBullets[EnemyMan.bulletFrame / 10].y = EnemyMan.y + 20;
-
+                if (EnemyMan.bulletsActive < MAX_BULLETS && EnemyMan.bulletFrame >= (rand() % 81 + 10)) {
+                    for (int i = 0; i < MAX_BULLETS; i++) {
+                        if (!enemyManBullets[i].active) {
+                            enemyManBullets[i].active = true;
+                            enemyManBullets[i].x = EnemyMan.x;
+                            enemyManBullets[i].y = EnemyMan.y + 20;
+                            EnemyMan.bulletsActive++;
+                            break;
+                        }
+                    }
+                    EnemyMan.bulletFrame = 0;
                 }
                 EnemyMan.bulletFrame++;
-
-                if (EnemyMan.bulletFrame >= MAX_BULLETS * 10) {
-
+                if (EnemyMan.bulletsActive >= MAX_BULLETS) {
                     EnemyMan.timer = 0;
                     EnemyMan.bulletFrame = 0;
-
+                    EnemyMan.bulletsActive = 0;
                 }
             }
         }
@@ -309,6 +328,16 @@ int main()
 
         P.PCollider = { (float)P.x[0], (float)P.y[0], (float)TotalPlayerWidth - 30, (float)TotalPlayerHeight - 130 };
 
+        if (IsKeyDown(KEY_S) && S.health > 0) {
+            S.active = true;
+        }
+        else
+            S.active = false;
+
+        if (S.active && S.health > 0) {
+            DrawTexture(S.SImage, P.x[0] + 25, P.y[0] - 10, WHITE);
+        }
+
         for (int i = 0; i < MAX_BULLETS; i++) {
             if (enemyBullets[i].active) {
 
@@ -316,8 +345,15 @@ int main()
                     (float)enemyBullets[i].BWidth, (float)enemyBullets[i].BHeight };
 
                 if (CheckCollisionRecs(enemyBullets[i].BCollider, P.PCollider)) {
+                    if (S.active && S.health > 0) {
+                        S.health -= 5;
+                        enemyManBullets[i].active = false;
 
-                    P.PHealth -= 3;
+                        if (S.health <= 0) S.active = false;
+                    }
+                    else {
+                        P.PHealth -= 3;
+                    }
                     enemyBullets[i].active = false;
                 }
             }
@@ -327,9 +363,16 @@ int main()
                     (float)enemyManBullets[i].BWidth, (float)enemyManBullets[i].BHeight };
 
                 if (CheckCollisionRecs(enemyManBullets[i].BCollider, P.PCollider)) {
+                    if (S.active && S.health > 0) {
+                        S.health -= 5;
+                        enemyManBullets[i].active = false;
 
-                    P.PHealth -= 3;
-                    enemyManBullets[i].active = false;
+                        if (S.health <= 0) S.active = false;
+                    }
+                    else {
+                        P.PHealth -= 3;
+                    }
+                    enemyBullets[i].active = false;
                 }
             }
         }
