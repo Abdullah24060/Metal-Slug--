@@ -142,6 +142,8 @@
     <Image Include="Leg4.png" />
     <Image Include="Leg5.png" />
     <Image Include="PlayerBody.png" />
+    <Image Include="Player_Shoot.png" />
+    <Image Include="Shield.png" />
     <Image Include="Title.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -1,6 +1,12 @@
 ﻿  Metal Slug Project OOP.cpp
-D:\Coding VS Community\Metal Slug Project OOP\Metal Slug Project OOP\Metal Slug Project OOP.cpp(213,19): warning C4244: '+=': conversion from 'float' to 'int', possible loss of data
-D:\Coding VS Community\Metal Slug Project OOP\Metal Slug Project OOP\Metal Slug Project OOP.cpp(214,19): warning C4244: '+=': conversion from 'float' to 'int', possible loss of data
+D:\Coding VS Community\Metal Slug Project OOP\Metal Slug Project OOP\Metal Slug Project OOP.cpp(228,15): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+D:\Coding VS Community\Metal Slug Project OOP\Metal Slug Project OOP\Metal Slug Project OOP.cpp(465,19): warning C4244: '+=': conversion from 'float' to 'int', possible loss of data
+D:\Coding VS Community\Metal Slug Project OOP\Metal Slug Project OOP\Metal Slug Project OOP.cpp(466,19): warning C4244: '+=': conversion from 'float' to 'int', possible loss of data
+D:\Coding VS Community\Metal Slug Project OOP\Metal Slug Project OOP\Metal Slug Project OOP.cpp(467,19): warning C4244: '+=': conversion from 'float' to 'int', possible loss of data
+D:\Coding VS Community\Metal Slug Project OOP\Metal Slug Project OOP\Metal Slug Project OOP.cpp(515,35): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+D:\Coding VS Community\Metal Slug Project OOP\Metal Slug Project OOP\Metal Slug Project OOP.cpp(516,35): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+D:\Coding VS Community\Metal Slug Project OOP\Metal Slug Project OOP\Metal Slug Project OOP.cpp(518,48): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+D:\Coding VS Community\Metal Slug Project OOP\Metal Slug Project OOP\Metal Slug Project OOP.cpp(519,48): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
   Metal Slug Project OOP.vcxproj -> D:\Coding VS Community\Metal Slug Project OOP\x64\Debug\Metal Slug Project OOP.exe
   'pwsh.exe' is not recognized as an internal or external command,
   operable program or batch file.

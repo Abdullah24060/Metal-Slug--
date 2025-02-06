@@ -4,11 +4,11 @@
 using namespace std;
 #define ScreenHeight 600
 #define ScreenWidth 1000
-#define MAX_BULLETS 5
+#define MAX_BULLETS 3
 
 struct Player
 {
-    int x[2], y[2];
+    int x[3], y[3];
     bool isAlive;
     float PHealth;
     Rectangle PCollider;
@@ -29,6 +29,8 @@ struct Bullet
     bool active;
     int BHeight, BWidth;
     Rectangle BCollider;
+    int vel_x;
+    int vel_y;
 };
 
 struct Enemy
@@ -62,8 +64,11 @@ void LoadPlayerImages(Player& P)
     P.PImage[5] = LoadTexture("Leg5.png");
     P.PHeight[1] = 80, P.PWidth[1] = 60;
 
-    P.x[0] = P.PWidth[0] - 5, P.y[0] = ScreenHeight - P.PHeight[0] + 25;
+    P.PImage[6] = LoadTexture("Player_Shoot.png");
+
+    P.x[0] = P.PWidth[0] - 5, P.y[0] = ScreenHeight - P.PHeight[0] + 25; 
     P.x[1] = P.PWidth[1] + 20, P.y[1] = ScreenHeight - P.PHeight[1] - 20;
+    P.x[2] = P.PWidth[0] - 5, P.y[2] = ScreenHeight - P.PHeight[0]-15;
 }
 
 void RespawnEnemy(Enemy& E)
@@ -95,11 +100,125 @@ void EnemyShoot(Enemy& enemy, Player& player, Bullet enemyBullets[], int maxBull
     }
 }
 
+void LoadPlayerBulletImages(Bullet bullets[], Player P, const char* Fname)
+{
+    for (int i = 0; i < MAX_BULLETS; i++)
+    {
+        bullets[i].BImage = LoadTexture(Fname);  //Bullet.png
+        bullets[i].BHeight = 10, bullets[i].BWidth = 20;
+        bullets[i].x = P.PWidth[0] + 60, bullets[i].y = ScreenHeight - P.PHeight[0] + 40;
+        bullets[i].active = false;
+        bullets[i].vel_x = 0;
+        bullets[i].vel_y = 0;
+    }
+}
+
+void LoadEnemyBulletImages(Bullet enemyBullets[], const char* Fname)
+{
+    for (int i = 0; i < MAX_BULLETS; i++)
+    {
+        enemyBullets[i].BImage = LoadTexture(Fname); //eBullet1.png
+        enemyBullets[i].BHeight = 10, enemyBullets[i].BWidth = 20;
+        enemyBullets[i].active = false;
+    }
+}
+
+void EnemyBulletShooting(Enemy& E, Bullet enemyBullets[MAX_BULLETS])
+{
+    if (E.x < ScreenWidth) {
+        if (E.timer != 80) {
+            E.timer++;
+        }
+        else {
+            if (E.bulletsActive < MAX_BULLETS && E.bulletFrame >= (rand() % 81 + 10)) {
+                for (int i = 0; i < MAX_BULLETS; i++) {
+                    if (!enemyBullets[i].active) {
+                        enemyBullets[i].active = true;
+                        enemyBullets[i].x = E.x;
+                        enemyBullets[i].y = E.y;
+                        E.bulletsActive++;
+                        break;
+                    }
+                }
+                E.bulletFrame = 0;
+            }
+            E.bulletFrame++;
+            if (E.bulletsActive >= MAX_BULLETS) {
+                E.timer = 0;
+                E.bulletFrame = 0;
+                E.bulletsActive = 0;
+            }
+        }
+    }
+
+    for (int i = 0; i < MAX_BULLETS; i++) {
+        if (enemyBullets[i].active) {
+            enemyBullets[i].x -= 10;
+            if (enemyBullets[i].x < 0) {
+                enemyBullets[i].active = false;
+            }
+            DrawTexture(enemyBullets[i].BImage, enemyBullets[i].x, enemyBullets[i].y, WHITE);
+        }
+    }
+}
+
+
+void ShieldHealth(Shield& S)
+{
+    if (S.health > 0) {
+        DrawRectangle(20, 50, 200, 20, GRAY);
+        DrawRectangle(20, 50, (int)(200 * (S.health / 100.0f)), 20, BLUE);
+    }
+}
 
 void HealthBar(Player& P)
 {
     DrawRectangle(20, 20, 200, 20, RED);
     DrawRectangle(20, 20, (int)(200 * (P.PHealth / 100.0f)), 20, GREEN);
+}
+
+void PlayerBulletAndEnemyCollisionCheck(Bullet bullets[],int& score,Enemy& E, Enemy& EnemyMan,Enemy& Helicopter, Rectangle EnemyR, Rectangle EnemyManR, Rectangle HelicopterR)
+{
+    for (int i = 0; i < MAX_BULLETS; i++)
+    {
+        if (bullets[i].active)
+        {
+            if (bullets[i].vel_y != 0) 
+            {
+                bullets[i].x += bullets[i].vel_x;
+                bullets[i].y += bullets[i].vel_y;
+            }
+            else
+            {
+                bullets[i].x += 10;
+            }
+
+            if (bullets[i].x < 0 || bullets[i].x > ScreenWidth ||
+                bullets[i].y < 0 || bullets[i].y > ScreenHeight)
+            {
+                bullets[i].active = false;
+            }
+            bullets[i].BCollider = { (float)bullets[i].x, (float)bullets[i].y,(float)bullets[i].BWidth, (float)bullets[i].BHeight };
+            if (CheckCollisionRecs(bullets[i].BCollider, EnemyR))
+            {
+                score++;
+                bullets[i].active = false;
+                RespawnEnemy(E);
+            }
+            if (CheckCollisionRecs(bullets[i].BCollider, EnemyManR))
+            {
+                score++;
+                bullets[i].active = false;
+                RespawnEnemy(EnemyMan);
+            }
+            if (CheckCollisionRecs(bullets[i].BCollider, HelicopterR))
+            {
+                score++;
+                bullets[i].active = false;
+                RespawnHelicopter(Helicopter);
+            }
+        }
+    }
 }
 
 
@@ -114,8 +233,10 @@ int main()
     Bullet enemyBullets[MAX_BULLETS] = {};
     Music bgIntro = LoadMusicStream("bgIntro.mp3");
     Music bgMusic = LoadMusicStream("bgMusic.mp3");
+    Music BulletSound = LoadMusicStream("Bullet_Sound.mp3");
     SetMusicVolume(bgIntro, 1.0f);
     SetMusicVolume(bgMusic, 1.0f);
+    SetMusicVolume(BulletSound, 1.0f);
 
     Enemy E, EnemyMan, Helicopter;  //Can be array
     P.isAlive = true;
@@ -147,20 +268,12 @@ int main()
     Helicopter.EHeight = 150;
     Helicopter.EWidth = 100;
 
-    for (int i = 0; i < MAX_BULLETS; i++) {
-        bullets[i].BImage = LoadTexture("Bullet.png");
-        bullets[i].BHeight = 10, bullets[i].BWidth = 20;
-        bullets[i].x = P.PWidth[0] + 60, bullets[i].y = ScreenHeight - P.PHeight[0] + 40;
-        bullets[i].active = false;
-
-        enemyBullets[i].BImage = LoadTexture("eBullet1.png");
-        enemyBullets[i].BHeight = 10, enemyBullets[i].BWidth = 20;
-        enemyBullets[i].active = false;
-
-        enemyManBullets[i].BImage = LoadTexture("eBullet2.png");
-        enemyManBullets[i].BHeight = 10, enemyManBullets[i].BWidth = 20;
-        enemyManBullets[i].active = false;
-    }
+ 
+ 
+ 
+    LoadPlayerBulletImages(bullets, P, "Bullet.png");
+    LoadEnemyBulletImages(enemyBullets, "eBullet1.png");
+    LoadEnemyBulletImages(enemyManBullets, "eBullet2.png");
 
     S.SImage = LoadTexture("Shield.png");
     LoadPlayerImages(P);
@@ -185,6 +298,8 @@ int main()
     b2.ri = 0, b2.ci = ScreenWidth;
 
     int FrameCount = 0;
+    bool ShootHappen=false;
+    int ShootFrame = 0;
     int LegFrame = 1;
 
     float PSpeed = 0;
@@ -215,10 +330,13 @@ int main()
         }
         EndDrawing();
     }
-
     while (!WindowShouldClose())
     {
-
+        ShootFrame++;
+        if (ShootFrame>=60)
+        {
+            ShootFrame = 0;
+        }
         UpdateMusicStream(bgMusic);
         BeginDrawing();
         DrawTexture(bg1, b1.ci, b1.ri, WHITE);
@@ -234,15 +352,26 @@ int main()
 
 
         DrawTexture(P.PImage[LegFrame], P.x[1], P.y[1], WHITE);
-        DrawTexture(P.PImage[0], P.x[0], P.y[0], WHITE);
+        
+
+        if(ShootHappen)
+        {
+            DrawTexture(P.PImage[6], P.x[2], P.y[2], WHITE);
+        }
+        else
+        {
+            DrawTexture(P.PImage[0], P.x[0], P.y[0], WHITE);
+        }
+        if (ShootFrame == 8)
+        {
+            ShootHappen = false;
+        }
 
         DrawTexture(E.EImage, E.x, E.y, WHITE);
         DrawTexture(EnemyMan.EImage, EnemyMan.x, EnemyMan.y, WHITE);
         DrawTexture(Helicopter.EImage, Helicopter.x, Helicopter.y, WHITE);
-        if (S.health > 0) {
-            DrawRectangle(20, 50, 200, 20, GRAY);
-            DrawRectangle(20, 50, (int)(200 * (S.health / 100.0f)), 20, BLUE);
-        }
+
+        ShieldHealth(S);
 
 
 
@@ -250,85 +379,13 @@ int main()
         EnemyMan.x--;
         Helicopter.x--;
 
+        EnemyBulletShooting(E, enemyBullets);
+        EnemyBulletShooting(EnemyMan, enemyManBullets);
 
-        if (E.x < ScreenWidth) {
-            if (E.timer != 80) {
-                E.timer++;
-            }
-            else {
-                if (E.bulletsActive < MAX_BULLETS && E.bulletFrame >= (rand() % 81 + 10)) {
-                    for (int i = 0; i < MAX_BULLETS; i++) {
-                        if (!enemyBullets[i].active) {
-                            enemyBullets[i].active = true;
-                            enemyBullets[i].x = E.x;
-                            enemyBullets[i].y = E.y;
-                            E.bulletsActive++;
-                            break;
-                        }
-                    }
-                    E.bulletFrame = 0;
-                }
-                E.bulletFrame++;
-                if (E.bulletsActive >= MAX_BULLETS) {
-                    E.timer = 0;
-                    E.bulletFrame = 0;
-                    E.bulletsActive = 0;
-                }
-            }
-        }
-
-        if (EnemyMan.x < ScreenWidth) {
-            if (EnemyMan.timer != 80) {
-                EnemyMan.timer++;
-            }
-            else {
-                if (EnemyMan.bulletsActive < MAX_BULLETS && EnemyMan.bulletFrame >= (rand() % 81 + 10)) {
-                    for (int i = 0; i < MAX_BULLETS; i++) {
-                        if (!enemyManBullets[i].active) {
-                            enemyManBullets[i].active = true;
-                            enemyManBullets[i].x = EnemyMan.x;
-                            enemyManBullets[i].y = EnemyMan.y + 20;
-                            EnemyMan.bulletsActive++;
-                            break;
-                        }
-                    }
-                    EnemyMan.bulletFrame = 0;
-                }
-                EnemyMan.bulletFrame++;
-                if (EnemyMan.bulletsActive >= MAX_BULLETS) {
-                    EnemyMan.timer = 0;
-                    EnemyMan.bulletFrame = 0;
-                    EnemyMan.bulletsActive = 0;
-                }
-            }
-        }
-
-        for (int i = 0; i < MAX_BULLETS; i++) {
-            if (enemyBullets[i].active) {
-                enemyBullets[i].x -= 10;
-                if (enemyBullets[i].x < 0) {
-                    enemyBullets[i].active = false;
-                }
-                DrawTexture(enemyBullets[i].BImage, enemyBullets[i].x, enemyBullets[i].y, WHITE);
-            }
-        }
-
-        for (int i = 0; i < MAX_BULLETS; i++) {
-
-            if (enemyManBullets[i].active) {
-
-                enemyManBullets[i].x -= 10;
-                if (enemyManBullets[i].x < 0) {
-
-                    enemyManBullets[i].active = false;
-                }
-                DrawTexture(enemyManBullets[i].BImage, enemyManBullets[i].x, enemyManBullets[i].y, WHITE);
-            }
-        }
 
         P.PCollider = { (float)P.x[0], (float)P.y[0], (float)TotalPlayerWidth - 30, (float)TotalPlayerHeight - 130 };
 
-        if (IsKeyDown(KEY_S) && S.health > 0) {
+        if (IsKeyDown(KEY_LEFT_SHIFT) && S.health > 0) {
             S.active = true;
         }
         else
@@ -407,12 +464,14 @@ int main()
         }
         P.y[0] += PSpeed;
         P.y[1] += PSpeed;
+        P.y[2] += PSpeed;
         PSpeed += 0.5;
 
         if (P.y[0] >= ScreenHeight - P.PHeight[0] + 25)
         {
             P.y[0] = ScreenHeight - P.PHeight[0] + 25;
             P.y[1] = ScreenHeight - P.PHeight[1] - 25;
+            P.y[2] = ScreenHeight - P.PHeight[0] - 15;
             PSpeed = 0;
             Jump = false;
         }
@@ -424,48 +483,47 @@ int main()
 
         if (IsKeyPressed(KEY_SPACE))
         {
+            ShootHappen = true;
+            PlayMusicStream(BulletSound);
+
             for (int i = 0; i < MAX_BULLETS; i++)
             {
                 if (bullets[i].active == false)
                 {
                     bullets[i].active = true;
                     bullets[i].x = P.x[0] + P.PWidth[0] - 30;
-                    bullets[i].y = P.y[0] + 20;
+                    bullets[i].y = P.y[0] + 7;
+                    bullets[i].vel_y = 0;
                     break;
                 }
             }
         }
 
-        for (int i = 0; i < MAX_BULLETS; i++)
+        if (IsKeyPressed(KEY_E))
         {
-            if (bullets[i].active)
+            ShootHappen = true;
+            PlayMusicStream(BulletSound);
+
+            for (int i = 0; i < MAX_BULLETS; i++)
             {
-                bullets[i].x += 10;
-                if (bullets[i].x > ScreenWidth)
+                if (bullets[i].active == false)
                 {
-                    bullets[i].active = false;
-                }
-                bullets[i].BCollider = { (float)bullets[i].x, (float)bullets[i].y,(float)bullets[i].BWidth, (float)bullets[i].BHeight };
-                if (CheckCollisionRecs(bullets[i].BCollider, EnemyR))
-                {
-                    score++;
-                    bullets[i].active = false;
-                    RespawnEnemy(E);
-                }
-                if (CheckCollisionRecs(bullets[i].BCollider, EnemyManR))
-                {
-                    score++;
-                    bullets[i].active = false;
-                    RespawnEnemy(EnemyMan);
-                }
-                if (CheckCollisionRecs(bullets[i].BCollider, HelicopterR))
-                {
-                    score++;
-                    bullets[i].active = false;
-                    RespawnEnemy(Helicopter);
+                    bullets[i].active = true;
+                    bullets[i].x = P.x[0] + P.PWidth[0] - 30;
+                    bullets[i].y = P.y[0] + 7;
+
+                    float xChange = Helicopter.x - bullets[i].x;
+                    float yChange = Helicopter.y - bullets[i].y;
+
+                    bullets[i].vel_x = xChange / 40;
+                    bullets[i].vel_y = yChange / 40;
+                    break;
                 }
             }
         }
+
+        PlayerBulletAndEnemyCollisionCheck(bullets, score, E, EnemyMan, Helicopter, EnemyR, EnemyManR, HelicopterR);
+
 
         if (P.PHealth <= 0) {
             DrawText("GAME OVER", ScreenWidth / 2 - 100, ScreenHeight / 2, 40, RED);

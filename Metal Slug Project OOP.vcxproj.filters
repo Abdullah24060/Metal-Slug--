@@ -59,5 +59,11 @@
     <Image Include="Bullet.png">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="Shield.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Player_Shoot.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>
