@@ -41,17 +41,37 @@ struct Enemy
     float EHealth;
     Bullet bullets;
     Texture2D EImage;
-    void (*fptr)(Enemy);
     int EHeight, EWidth;
     int timer;
     int bulletFrame;
     int bulletsActive = 0;
+    void (*loadImage)(Enemy&);
 };
 
 struct BG
 {
     int ri, ci;
 };
+
+
+void LoadEnemyImage(Enemy& enemy) {
+    enemy.EImage = LoadTexture("Enemy.png");
+    enemy.EHeight = 150;
+    enemy.EWidth = 100;
+}
+
+void LoadEnemyManImage(Enemy& enemy) {
+    enemy.EImage = LoadTexture("Enemy_Man.png");
+    enemy.EHeight = 150;
+    enemy.EWidth = 100;
+}
+
+void LoadHelicopterImage(Enemy& enemy) {
+    enemy.EImage = LoadTexture("Heli.png");
+    enemy.EHeight = 150;
+    enemy.EWidth = 100;
+}
+
 
 void LoadPlayerImages(Player& P)
 {
@@ -66,9 +86,9 @@ void LoadPlayerImages(Player& P)
 
     P.PImage[6] = LoadTexture("Player_Shoot.png");
 
-    P.x[0] = P.PWidth[0] - 5, P.y[0] = ScreenHeight - P.PHeight[0] + 25; 
+    P.x[0] = P.PWidth[0] - 5, P.y[0] = ScreenHeight - P.PHeight[0] + 25;
     P.x[1] = P.PWidth[1] + 20, P.y[1] = ScreenHeight - P.PHeight[1] - 20;
-    P.x[2] = P.PWidth[0] - 5, P.y[2] = ScreenHeight - P.PHeight[0]-15;
+    P.x[2] = P.PWidth[0] - 5, P.y[2] = ScreenHeight - P.PHeight[0] - 15;
 }
 
 void RespawnEnemy(Enemy& E)
@@ -83,28 +103,12 @@ void RespawnHelicopter(Enemy& E)
     E.y = E.EHeight - 20;
 }
 
-void EnemyShoot(Enemy& enemy, Player& player, Bullet enemyBullets[], int maxBullets, Texture2D bulletTexture)
-{
-
-
-    for (int i = 0; i < maxBullets; i++) {
-        if (!enemyBullets[i].active) {
-            enemyBullets[i].active = true;
-            enemyBullets[i].x = enemy.x;
-            enemyBullets[i].y = enemy.y + enemy.EHeight / 2;
-            enemyBullets[i].BImage = bulletTexture;
-            enemyBullets[i].BWidth = 10;
-            enemyBullets[i].BHeight = 10;
-            break;
-        }
-    }
-}
 
 void LoadPlayerBulletImages(Bullet bullets[], Player P, const char* Fname)
 {
     for (int i = 0; i < MAX_BULLETS; i++)
     {
-        bullets[i].BImage = LoadTexture(Fname);  //Bullet.png
+        bullets[i].BImage = LoadTexture(Fname);
         bullets[i].BHeight = 10, bullets[i].BWidth = 20;
         bullets[i].x = P.PWidth[0] + 60, bullets[i].y = ScreenHeight - P.PHeight[0] + 40;
         bullets[i].active = false;
@@ -117,7 +121,7 @@ void LoadEnemyBulletImages(Bullet enemyBullets[], const char* Fname)
 {
     for (int i = 0; i < MAX_BULLETS; i++)
     {
-        enemyBullets[i].BImage = LoadTexture(Fname); //eBullet1.png
+        enemyBullets[i].BImage = LoadTexture(Fname);
         enemyBullets[i].BHeight = 10, enemyBullets[i].BWidth = 20;
         enemyBullets[i].active = false;
     }
@@ -162,6 +166,44 @@ void EnemyBulletShooting(Enemy& E, Bullet enemyBullets[MAX_BULLETS])
     }
 }
 
+void HelicopterBulletShooting(Enemy& E, Bullet HeliBullets[MAX_BULLETS])
+{
+    if (E.x < ScreenWidth) {
+        if (E.timer != 80) {
+            E.timer++;
+        }
+        else {
+            if (E.bulletsActive < MAX_BULLETS && E.bulletFrame >= (rand() % 51 + 50)) {
+                for (int i = 0; i < MAX_BULLETS; i++) {
+                    if (!HeliBullets[i].active) {
+                        HeliBullets[i].active = true;
+                        HeliBullets[i].x = E.x + 50;
+                        HeliBullets[i].y = E.y + 50;
+                        E.bulletsActive++;
+                        break;
+                    }
+                }
+                E.bulletFrame = 0;
+            }
+            E.bulletFrame++;
+            if (E.bulletsActive >= MAX_BULLETS) {
+                E.timer = 0;
+                E.bulletFrame = 0;
+                E.bulletsActive = 0;
+            }
+        }
+    }
+
+    for (int i = 0; i < MAX_BULLETS; i++) {
+        if (HeliBullets[i].active) {
+            HeliBullets[i].y += 10;
+            if (HeliBullets[i].y > ScreenHeight - 50) {
+                HeliBullets[i].active = false;
+            }
+            DrawTexture(HeliBullets[i].BImage, HeliBullets[i].x, HeliBullets[i].y, WHITE);
+        }
+    }
+}
 
 void ShieldHealth(Shield& S)
 {
@@ -177,13 +219,13 @@ void HealthBar(Player& P)
     DrawRectangle(20, 20, (int)(200 * (P.PHealth / 100.0f)), 20, GREEN);
 }
 
-void PlayerBulletAndEnemyCollisionCheck(Bullet bullets[],int& score,Enemy& E, Enemy& EnemyMan,Enemy& Helicopter, Rectangle EnemyR, Rectangle EnemyManR, Rectangle HelicopterR)
+void PlayerBulletAndEnemyCollisionCheck(Bullet bullets[], int& score, Enemy& E, Enemy& EnemyMan, Enemy& Helicopter, Rectangle EnemyR, Rectangle EnemyManR, Rectangle HelicopterR)
 {
     for (int i = 0; i < MAX_BULLETS; i++)
     {
         if (bullets[i].active)
         {
-            if (bullets[i].vel_y != 0) 
+            if (bullets[i].vel_y != 0)
             {
                 bullets[i].x += bullets[i].vel_x;
                 bullets[i].y += bullets[i].vel_y;
@@ -221,24 +263,81 @@ void PlayerBulletAndEnemyCollisionCheck(Bullet bullets[],int& score,Enemy& E, En
     }
 }
 
+void HeliBulletDamage(Bullet HeliBullets[], Player& P, Shield& S, Rectangle PlayerR) {
+    for (int i = 0; i < MAX_BULLETS; i++) {
+
+        if (HeliBullets[i].active) {
+
+
+            HeliBullets[i].BCollider = { (float)HeliBullets[i].x, (float)HeliBullets[i].y,
+                (float)HeliBullets[i].BWidth, (float)HeliBullets[i].BHeight };
+
+            if (CheckCollisionRecs(HeliBullets[i].BCollider, PlayerR)) {
+
+                if (S.active && S.health > 0) {
+
+                    S.health -= 7;
+                    if (S.health <= 0) {
+
+
+                        S.active = false;
+                    }
+                }
+                else {
+
+                    P.PHealth -= 7;
+
+                }
+                HeliBullets[i].active = false;
+            }
+            else if (HeliBullets[i].y >= ScreenHeight - 50 &&
+                HeliBullets[i].x >= P.x[0] - 100 &&
+                HeliBullets[i].x <= P.x[0] + 100) {
+                if (S.active && S.health > 0) {
+                    S.health -= 4;
+                    if (S.health <= 0) {
+                        S.active = false;
+                    }
+                }
+                else {
+                    P.PHealth -= 4;
+                }
+                HeliBullets[i].active = false;
+            }
+        }
+    }
+}
+
+void DrawLevelInfo(int level)
+{
+    DrawText(TextFormat("LEVEL: %d", level), ScreenWidth - 200, 45, 20, WHITE);
+}
+
 
 // **********************MAINS************
 int main()
 {
     srand(time(0));
     InitAudioDevice();
+    bool changeBGonce = false;
+    int level = 1;
+    int ScreenTimer = 120;
     Player P;
     Bullet bullets[MAX_BULLETS] = {};
     Bullet enemyManBullets[MAX_BULLETS] = {};
     Bullet enemyBullets[MAX_BULLETS] = {};
+    Bullet HeliBullets[MAX_BULLETS] = {};
     Music bgIntro = LoadMusicStream("bgIntro.mp3");
     Music bgMusic = LoadMusicStream("bgMusic.mp3");
-    Music BulletSound = LoadMusicStream("Bullet_Sound.mp3");
+    Sound BulletSound = LoadSound("Bullet_Sound.mp3");
     SetMusicVolume(bgIntro, 1.0f);
     SetMusicVolume(bgMusic, 1.0f);
-    SetMusicVolume(BulletSound, 1.0f);
+    SetSoundVolume(BulletSound, 1.0f);
 
     Enemy E, EnemyMan, Helicopter;  //Can be array
+    E.loadImage = LoadEnemyImage;
+    EnemyMan.loadImage = LoadEnemyManImage;
+    Helicopter.loadImage = LoadHelicopterImage;
     P.isAlive = true;
     P.PHealth = 100.0;
     BG b1, b2;
@@ -255,25 +354,22 @@ int main()
 
     SetTargetFPS(60);
 
-
-    E.EImage = LoadTexture("Enemy.png");
-    E.EHeight = 150, E.EWidth = 100;
+    E.loadImage(E);
+    EnemyMan.loadImage(EnemyMan);
+    Helicopter.loadImage(Helicopter);
     E.timer = 0;
-    E.bulletFrame = 0;
-    EnemyMan.EImage = LoadTexture("Enemy_Man.png");
-    EnemyMan.EHeight = 150, EnemyMan.EWidth = 100;
     EnemyMan.timer = 0;
+    E.bulletFrame = 0;
     EnemyMan.bulletFrame = 0;
-    Helicopter.EImage = LoadTexture("Heli.png");
-    Helicopter.EHeight = 150;
-    Helicopter.EWidth = 100;
+    Helicopter.timer = 0;
+    Helicopter.bulletFrame = 0;
 
- 
- 
- 
+
+
     LoadPlayerBulletImages(bullets, P, "Bullet.png");
     LoadEnemyBulletImages(enemyBullets, "eBullet1.png");
     LoadEnemyBulletImages(enemyManBullets, "eBullet2.png");
+    LoadEnemyBulletImages(HeliBullets, "eBullet3.png");
 
     S.SImage = LoadTexture("Shield.png");
     LoadPlayerImages(P);
@@ -298,7 +394,7 @@ int main()
     b2.ri = 0, b2.ci = ScreenWidth;
 
     int FrameCount = 0;
-    bool ShootHappen=false;
+    bool ShootHappen = false;
     int ShootFrame = 0;
     int LegFrame = 1;
 
@@ -333,7 +429,7 @@ int main()
     while (!WindowShouldClose())
     {
         ShootFrame++;
-        if (ShootFrame>=60)
+        if (ShootFrame >= 60)
         {
             ShootFrame = 0;
         }
@@ -352,9 +448,9 @@ int main()
 
 
         DrawTexture(P.PImage[LegFrame], P.x[1], P.y[1], WHITE);
-        
 
-        if(ShootHappen)
+
+        if (ShootHappen)
         {
             DrawTexture(P.PImage[6], P.x[2], P.y[2], WHITE);
         }
@@ -369,18 +465,62 @@ int main()
 
         DrawTexture(E.EImage, E.x, E.y, WHITE);
         DrawTexture(EnemyMan.EImage, EnemyMan.x, EnemyMan.y, WHITE);
-        DrawTexture(Helicopter.EImage, Helicopter.x, Helicopter.y, WHITE);
+
 
         ShieldHealth(S);
 
+        if (score >= 15 and level == 1 and changeBGonce == false) {
+            changeBGonce = true;
+            bg1 = LoadTexture("bg3.png");
+            bg2 = LoadTexture("bg4.png");
+            bg1.height = ScreenHeight;
+            bg1.width = ScreenWidth;
+            bg2.height = ScreenHeight;
+            bg2.width = ScreenWidth;
+        }
+        if (score >= 15 and level == 1) {
+            level = 2;
+            ScreenTimer = 120;
 
+            while (ScreenTimer > 0) {
+
+                UpdateMusicStream(bgMusic);
+                BeginDrawing();
+                ClearBackground(BLACK);
+
+                DrawText("LEVEL 2", ScreenWidth / 2 - 100, ScreenHeight / 2 - 50, 40, WHITE);
+                DrawText("Use E to destroy the Helicopter!", ScreenWidth / 2 - 250, ScreenHeight / 2 + 20, 30, WHITE);
+
+                ScreenTimer--;
+                EndDrawing();
+            }
+
+            RespawnEnemy(E);
+            RespawnEnemy(EnemyMan);
+            RespawnHelicopter(Helicopter);
+        }
+
+        DrawLevelInfo(level);
 
         E.x--;
         EnemyMan.x--;
-        Helicopter.x--;
+        if (level >= 2) {
+            E.x--;
+            EnemyMan.x--;
+            Helicopter.x--;
+
+        }
 
         EnemyBulletShooting(E, enemyBullets);
         EnemyBulletShooting(EnemyMan, enemyManBullets);
+
+        if (level >= 2) {
+            HelicopterBulletShooting(Helicopter, HeliBullets);
+            DrawTexture(Helicopter.EImage, Helicopter.x, Helicopter.y, WHITE);
+            HeliBulletDamage(HeliBullets, P, S, P.PCollider);
+            Helicopter.x--;
+        }
+
 
 
         P.PCollider = { (float)P.x[0], (float)P.y[0], (float)TotalPlayerWidth - 30, (float)TotalPlayerHeight - 130 };
@@ -450,7 +590,11 @@ int main()
             b2.ci -= 3;
             E.x -= 3;
             EnemyMan.x -= 3;
-            Helicopter.x -= 3;
+            if (level == 2) {
+                E.x -= 1;
+                EnemyMan.x -= 1;
+                Helicopter.x -= 3;
+            }
         }
         else
         {
@@ -484,7 +628,7 @@ int main()
         if (IsKeyPressed(KEY_SPACE))
         {
             ShootHappen = true;
-            PlayMusicStream(BulletSound);
+            PlaySound(BulletSound);
 
             for (int i = 0; i < MAX_BULLETS; i++)
             {
@@ -502,7 +646,7 @@ int main()
         if (IsKeyPressed(KEY_E))
         {
             ShootHappen = true;
-            PlayMusicStream(BulletSound);
+            PlaySound(BulletSound);
 
             for (int i = 0; i < MAX_BULLETS; i++)
             {
@@ -533,8 +677,11 @@ int main()
                 ClearBackground(BLACK);
                 DrawText("GAME OVER", ScreenWidth / 2 - 100, ScreenHeight / 2 - 100, 40, RED);
                 DrawText("Press escape to exit", ScreenWidth / 2 - 120, ScreenHeight / 2 - 120 + 60, 30, WHITE);
+
                 EndDrawing();
+
             }
+
             break;
         }
 
