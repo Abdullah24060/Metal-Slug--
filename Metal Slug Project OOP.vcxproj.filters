@@ -65,5 +65,86 @@
     <Image Include="Player_Shoot.png">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="eBullet3.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="bg3.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="bg4.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Blood_1.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Blood_2.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Blood_3.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Blood_4.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Boss10.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Boss1.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Boss2.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Boss3.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Boss4.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Boss5.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Boss6.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Boss7.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Boss8.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Boss9.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Boss11.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Boss12.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Boss13.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Boss14.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Boss15.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Boss16.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Boss17.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Boss18.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="bg5.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="eBullet4.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

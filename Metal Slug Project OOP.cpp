@@ -36,10 +36,8 @@ struct Bullet
 struct Enemy
 {
     int x, y;
-    int Espeed;
     Rectangle ECollider;
     float EHealth;
-    Bullet bullets;
     Texture2D EImage;
     int EHeight, EWidth;
     int timer;
@@ -48,9 +46,36 @@ struct Enemy
     void (*loadImage)(Enemy&);
 };
 
+struct Boss
+{
+    int x, y;
+    float BossHealth;
+    Rectangle BossCollider;
+    Texture2D BossImage[20];
+    Texture2D BossDefeatImage[15];
+    int BossHeight, BossWidth;
+    int Bosstimer;
+    int BossbulletFrame;
+    bool BossActive;
+    Bullet BossBullet[MAX_BULLETS] = {};
+    bool BossDefeated = false;
+    int BossDefeatFrame = 0;
+    int BossDefeatTimer = 0;
+};
+
 struct BG
 {
     int ri, ci;
+};
+
+struct Blood
+{
+    int x, y;
+    Texture2D PBlood[5];
+    int BHeight, BWidth;
+    int BloodFrame;
+    bool IsBlood;
+    int BloodTime;
 };
 
 
@@ -89,6 +114,48 @@ void LoadPlayerImages(Player& P)
     P.x[0] = P.PWidth[0] - 5, P.y[0] = ScreenHeight - P.PHeight[0] + 25;
     P.x[1] = P.PWidth[1] + 20, P.y[1] = ScreenHeight - P.PHeight[1] - 20;
     P.x[2] = P.PWidth[0] - 5, P.y[2] = ScreenHeight - P.PHeight[0] - 15;
+}
+
+void LoadBossImages(Boss& BEnemy)
+{
+    BEnemy.BossImage[0] = LoadTexture("Boss1.png");
+    BEnemy.BossImage[1] = LoadTexture("Boss2.png");
+    BEnemy.BossImage[2] = LoadTexture("Boss3.png");
+    BEnemy.BossImage[3] = LoadTexture("Boss4.png");
+    BEnemy.BossImage[4] = LoadTexture("Boss5.png");
+    BEnemy.BossImage[5] = LoadTexture("Boss6.png");
+    BEnemy.BossImage[6] = LoadTexture("Boss7.png");
+    BEnemy.BossImage[7] = LoadTexture("Boss8.png");
+    BEnemy.BossImage[8] = LoadTexture("Boss9.png");
+    BEnemy.BossImage[9] = LoadTexture("Boss10.png");
+
+    BEnemy.BossHeight = 220, BEnemy.BossWidth = 255;
+
+    BEnemy.x = ScreenWidth-BEnemy.BossWidth-10, BEnemy.y = ScreenHeight-BEnemy.BossHeight+10;
+
+    BEnemy.BossDefeatImage[0] = LoadTexture("Boss11.png");
+    BEnemy.BossDefeatImage[1] = LoadTexture("Boss12.png");
+    BEnemy.BossDefeatImage[2] = LoadTexture("Boss13.png");
+    BEnemy.BossDefeatImage[3] = LoadTexture("Boss14.png");
+    BEnemy.BossDefeatImage[4] = LoadTexture("Boss15.png");
+    BEnemy.BossDefeatImage[5] = LoadTexture("Boss16.png");
+    BEnemy.BossDefeatImage[6] = LoadTexture("Boss17.png");
+    BEnemy.BossDefeatImage[7] = LoadTexture("Boss18.png");
+}
+
+void LoadBloodImages(Blood& B, Player P)
+{
+    B.PBlood[0] = LoadTexture("Blood_1.png");
+    B.PBlood[1] = LoadTexture("Blood_2.png");
+    B.PBlood[2] = LoadTexture("Blood_3.png");
+    B.PBlood[3] = LoadTexture("Blood_4.png");
+
+    B.BHeight = 80, B.BWidth = 100;
+
+    B.x = P.PWidth[0] - 32, P.y[0], B.y = ScreenHeight - P.PHeight[0];
+    B.IsBlood = false;
+    B.BloodFrame = 0;
+    B.BloodTime = 0;
 }
 
 void RespawnEnemy(Enemy& E)
@@ -215,11 +282,18 @@ void ShieldHealth(Shield& S)
 
 void HealthBar(Player& P)
 {
-    DrawRectangle(20, 20, 200, 20, RED);
+    DrawRectangle(20, 20, 400, 20, RED);
     DrawRectangle(20, 20, (int)(200 * (P.PHealth / 100.0f)), 20, GREEN);
 }
 
-void PlayerBulletAndEnemyCollisionCheck(Bullet bullets[], int& score, Enemy& E, Enemy& EnemyMan, Enemy& Helicopter, Rectangle EnemyR, Rectangle EnemyManR, Rectangle HelicopterR)
+void BossHealth(Boss& BEnemy)
+{
+    DrawRectangle(ScreenWidth / 2, 70, 400, 20, BLACK);
+    DrawRectangle(ScreenWidth/2, 70, (int)(200 * (BEnemy.BossHealth/ 100.0f)), 20, YELLOW);
+}
+
+void PlayerBulletAndEnemyCollisionCheck(Bullet bullets[], int& score, Enemy& E, Enemy& EnemyMan, Enemy& Helicopter, Boss& BEnemy,
+                                        Rectangle EnemyR, Rectangle EnemyManR, Rectangle HelicopterR, Rectangle BossR,int level)
 {
     for (int i = 0; i < MAX_BULLETS; i++)
     {
@@ -258,6 +332,12 @@ void PlayerBulletAndEnemyCollisionCheck(Bullet bullets[], int& score, Enemy& E, 
                 score++;
                 bullets[i].active = false;
                 RespawnHelicopter(Helicopter);
+            }
+            if (level == 3 && CheckCollisionRecs(bullets[i].BCollider, BossR)) 
+            {
+                score++;
+                BEnemy.BossHealth -= 5;
+                bullets[i].active = false;
             }
         }
     }
@@ -313,8 +393,97 @@ void DrawLevelInfo(int level)
     DrawText(TextFormat("LEVEL: %d", level), ScreenWidth - 200, 45, 20, WHITE);
 }
 
+void ShowBlood(Blood& B)
+{
+    if (B.IsBlood==true)
+    {
+        DrawTexture(B.PBlood[B.BloodFrame], B.x, B.y, WHITE);
+        if (B.BloodTime > 0) 
+        {
+            B.BloodTime--;
+            if (B.BloodTime % 5 == 0) 
+            {
+                B.BloodFrame++;
+                if (B.BloodFrame >= 4)
+                {
+                    B.BloodFrame = 0;
+                }
+            }
+        }
+        else 
+        {
+            B.IsBlood= false;
+        }
+    }
+}
 
-// **********************MAINS************
+void BossBulletShooting(Boss& BEnemy,Sound BossGun)
+{
+    if (BEnemy.BossbulletFrame == 9)
+    {
+        PlaySound(BossGun);
+
+        for (int j = 0; j < MAX_BULLETS; j++)
+        {
+            if (BEnemy.BossBullet[j].active == false)
+            {
+                BEnemy.BossBullet[j].active = true;
+                BEnemy.BossBullet[j].x = BEnemy.x;
+                BEnemy.BossBullet[j].y = BEnemy.y + (BEnemy.BossHeight / 2) - 15;
+                break;
+            }
+        }
+    }
+
+    for (int j = 0; j < MAX_BULLETS; j++)
+    {
+        if (BEnemy.BossBullet[j].active)
+        {
+            BEnemy.BossBullet[j].x -= 8;
+            DrawTexture(BEnemy.BossBullet[j].BImage, BEnemy.BossBullet[j].x, BEnemy.BossBullet[j].y, WHITE);
+
+            if (BEnemy.BossBullet[j].x < 0)
+            {
+                BEnemy.BossBullet[j].active = false;
+            }
+        }
+    }
+}
+
+void BossBulletAndPlayerCollision(Boss& BEnemy,Shield& S,Player& P,Blood& B)
+{
+    for (int i = 0; i < MAX_BULLETS; i++)
+    {
+        if (BEnemy.BossBullet[i].active)
+        {
+            BEnemy.BossBullet[i].BCollider = { (float)BEnemy.BossBullet[i].x, (float)BEnemy.BossBullet[i].y,
+                (float)BEnemy.BossBullet[i].BWidth, (float)BEnemy.BossBullet[i].BHeight };
+
+            if (CheckCollisionRecs(BEnemy.BossBullet[i].BCollider, P.PCollider))
+            {
+                if (S.active && S.health > 0)
+                {
+                    S.health -= 10;
+                    BEnemy.BossBullet[i].active = false;
+
+                    if (S.health <= 0)
+                    {
+                        S.active = false;
+                    }
+                }
+                else
+                {
+                    P.PHealth -= 15;
+                    B.IsBlood = true;
+                    B.BloodTime = 30;
+                }
+                BEnemy.BossBullet[i].active = false;
+            }
+        }
+    }
+}
+
+// **********************MAIN************
 int main()
 {
     srand(time(0));
@@ -323,31 +492,42 @@ int main()
     int level = 1;
     int ScreenTimer = 120;
     Player P;
+    Blood B;
     Bullet bullets[MAX_BULLETS] = {};
     Bullet enemyManBullets[MAX_BULLETS] = {};
     Bullet enemyBullets[MAX_BULLETS] = {};
     Bullet HeliBullets[MAX_BULLETS] = {};
+
+
     Music bgIntro = LoadMusicStream("bgIntro.mp3");
     Music bgMusic = LoadMusicStream("bgMusic.mp3");
     Sound BulletSound = LoadSound("Bullet_Sound.mp3");
+    Sound BossGun = LoadSound("Boss_Gun_Sound.mp3");
     SetMusicVolume(bgIntro, 1.0f);
     SetMusicVolume(bgMusic, 1.0f);
     SetSoundVolume(BulletSound, 1.0f);
+    SetSoundVolume(BossGun, 5.0f);
 
-    Enemy E, EnemyMan, Helicopter;  //Can be array
+    Enemy E, EnemyMan, Helicopter;
+    Boss BEnemy;
+    BEnemy.BossActive = false;
+    BEnemy.BossbulletFrame = 0;
+    BEnemy.Bosstimer = 0;
+    BEnemy.BossHealth = 200.0;
     E.loadImage = LoadEnemyImage;
     EnemyMan.loadImage = LoadEnemyManImage;
     Helicopter.loadImage = LoadHelicopterImage;
     P.isAlive = true;
-    P.PHealth = 100.0;
+    P.PHealth = 200.0;
     BG b1, b2;
-    Texture2D bg1, bg2, Title;
+    Texture2D bg1, bg2,bg5, Title;
     bool GameStart = false;
     int score = 0;
 
     Shield S;
     S.health = 100.0f;
     S.active = false;
+
 
 
     InitWindow(ScreenWidth, ScreenHeight, "METAL SLUG");
@@ -370,9 +550,16 @@ int main()
     LoadEnemyBulletImages(enemyBullets, "eBullet1.png");
     LoadEnemyBulletImages(enemyManBullets, "eBullet2.png");
     LoadEnemyBulletImages(HeliBullets, "eBullet3.png");
+    LoadEnemyBulletImages(BEnemy.BossBullet, "eBullet4.png");
 
     S.SImage = LoadTexture("Shield.png");
+
+    
     LoadPlayerImages(P);
+    LoadBloodImages(B,P);
+    LoadBossImages(BEnemy);
+
+    
 
 
 
@@ -381,6 +568,9 @@ int main()
     bg1.height = ScreenHeight, bg1.width = ScreenWidth;
     bg2 = LoadTexture("Back2.png");
     bg2.height = ScreenHeight, bg2.width = ScreenWidth;
+    bg5 = LoadTexture("bg5.png");
+    bg5.height = ScreenHeight;
+    bg5.width = ScreenWidth;
     Title = LoadTexture("Title.png");
 
     E.x = ScreenWidth, E.y = ScreenHeight - E.EHeight + 25;
@@ -400,11 +590,15 @@ int main()
 
     float PSpeed = 0;
     bool Jump = false;
+    bool EndingMenu = false;
 
     PlayMusicStream(bgIntro);
+
+
     for (int i = 1; i <= 100; i++)  // Title Show
     {
         UpdateMusicStream(bgIntro);
+
         Title.height = 4 * i, Title.width = 6 * i;
         BeginDrawing();
         ClearBackground(BLACK);
@@ -417,7 +611,10 @@ int main()
         BeginDrawing();
         ClearBackground(BLACK);
         DrawTexture(Title, ScreenWidth / 2 - Title.width / 2, 20, WHITE);
-        DrawText("PRESS ENTER TO START", ScreenWidth / 2 - 180, ScreenHeight / 2 + 150, 30, WHITE);
+        DrawText("PRESS ENTER TO START.", ScreenWidth / 2 - 180, ScreenHeight / 2 + 150, 30, WHITE);
+        DrawText("Controls>> (D)forward..(W)Jump..(Space)Fire", ScreenWidth / 2 - 480, ScreenHeight / 2 + 200, 30, WHITE);
+        DrawText("(E)Diagonal Fire..(Left Shift)..Shield", ScreenWidth / 2 - 480, ScreenHeight / 2 + 250, 30, WHITE);
+
         if (IsKeyPressed(KEY_ENTER))
         {
             StopMusicStream(bgIntro);
@@ -426,6 +623,7 @@ int main()
         }
         EndDrawing();
     }
+    
     while (!WindowShouldClose())
     {
         ShootFrame++;
@@ -435,19 +633,22 @@ int main()
         }
         UpdateMusicStream(bgMusic);
         BeginDrawing();
-        DrawTexture(bg1, b1.ci, b1.ri, WHITE);
-        DrawTexture(bg2, b2.ci, b2.ri, WHITE);
+        if(level<3)
+        {
+            DrawTexture(bg1, b1.ci, b1.ri, WHITE);
+            DrawTexture(bg2, b2.ci, b2.ri, WHITE);
+        }
+        else
+        {
+            DrawTexture(bg5, 0, 0, WHITE);
+        }
 
-
-        //COLLIDER CHECKERS
-
-        //DrawRectangle(P.x[0], P.y[0], TotalPlayerWidth-30, TotalPlayerHeight-130, WHITE);  //Player collider checker
-        //DrawRectangle(E.x+15,E.y, E.EWidth-30,E.EHeight, WHITE); //Enemy Collider Checker
-        //DrawRectangle(EnemyMan.x, EnemyMan.y, EnemyMan.EWidth-10, EnemyMan.EHeight, WHITE);  //EnemyMan Collider Checker
-        //DrawRectangle(Helicopter.x+16, Helicopter.y, Helicopter.EWidth+30, Helicopter.EHeight-80, WHITE); //Helicopter Collider Checker
-
+        B.x = P.x[0] - 27;
+        B.y = P.y[0] - 25;
+        ShowBlood(B);
 
         DrawTexture(P.PImage[LegFrame], P.x[1], P.y[1], WHITE);
+
 
 
         if (ShootHappen)
@@ -462,14 +663,13 @@ int main()
         {
             ShootHappen = false;
         }
-
         DrawTexture(E.EImage, E.x, E.y, WHITE);
         DrawTexture(EnemyMan.EImage, EnemyMan.x, EnemyMan.y, WHITE);
 
 
         ShieldHealth(S);
 
-        if (score >= 15 and level == 1 and changeBGonce == false) {
+        if (score >= 15 and score <35 and level == 1 and changeBGonce == false) {
             changeBGonce = true;
             bg1 = LoadTexture("bg3.png");
             bg2 = LoadTexture("bg4.png");
@@ -478,13 +678,23 @@ int main()
             bg2.height = ScreenHeight;
             bg2.width = ScreenWidth;
         }
-        if (score >= 15 and level == 1) {
+
+        changeBGonce = false;
+
+        if (score >= 35 and level == 2 and changeBGonce == false) {
+            changeBGonce = true;
+            bg1 = bg5;
+        }
+
+        if (score >= 15 and score < 35 and level == 1) {
             level = 2;
             ScreenTimer = 120;
 
             while (ScreenTimer > 0) {
 
                 UpdateMusicStream(bgMusic);
+
+
                 BeginDrawing();
                 ClearBackground(BLACK);
 
@@ -500,21 +710,42 @@ int main()
             RespawnHelicopter(Helicopter);
         }
 
-        DrawLevelInfo(level);
+        if (score >= 35 and level == 2) {
+            level = 3;
+            ScreenTimer = 120;
 
-        E.x--;
-        EnemyMan.x--;
-        if (level >= 2) {
+            while (ScreenTimer > 0) {
+
+                UpdateMusicStream(bgMusic);
+
+
+                BeginDrawing();
+                ClearBackground(BLACK);
+
+                DrawText("LEVEL 3", ScreenWidth / 2 - 100, ScreenHeight / 2 - 50, 40, WHITE);
+                DrawText("Defeat The Final Boss!", ScreenWidth / 2 - 250, ScreenHeight / 2 + 20, 30, RED);
+
+                ScreenTimer--;
+                EndDrawing();
+            }
+            RespawnEnemy(E);
+            RespawnEnemy(EnemyMan);
+        }
+
+        DrawLevelInfo(level);
             E.x--;
             EnemyMan.x--;
-            Helicopter.x--;
+            if (level == 2) {
+                E.x--;
+                EnemyMan.x--;
+                Helicopter.x--;
 
-        }
+            }
 
         EnemyBulletShooting(E, enemyBullets);
         EnemyBulletShooting(EnemyMan, enemyManBullets);
 
-        if (level >= 2) {
+        if (level == 2) {
             HelicopterBulletShooting(Helicopter, HeliBullets);
             DrawTexture(Helicopter.EImage, Helicopter.x, Helicopter.y, WHITE);
             HeliBulletDamage(HeliBullets, P, S, P.PCollider);
@@ -544,12 +775,14 @@ int main()
                 if (CheckCollisionRecs(enemyBullets[i].BCollider, P.PCollider)) {
                     if (S.active && S.health > 0) {
                         S.health -= 5;
-                        enemyManBullets[i].active = false;
+                        enemyBullets[i].active = false;
 
                         if (S.health <= 0) S.active = false;
                     }
                     else {
-                        P.PHealth -= 3;
+                        P.PHealth -=5;
+                        B.IsBlood = true;
+                        B.BloodTime = 30;
                     }
                     enemyBullets[i].active = false;
                 }
@@ -567,12 +800,59 @@ int main()
                         if (S.health <= 0) S.active = false;
                     }
                     else {
-                        P.PHealth -= 3;
+                        P.PHealth -= 5;
+                        B.IsBlood = true;
+                        B.BloodTime = 30;
                     }
-                    enemyBullets[i].active = false;
+                    enemyManBullets[i].active = false;
                 }
             }
         }
+
+        if (level == 3)
+        {
+            if(BEnemy.BossHealth>0)
+            {
+
+                BEnemy.Bosstimer++;
+                if (BEnemy.Bosstimer % 10 == 0)
+                {
+                    BEnemy.BossbulletFrame++;
+                    if (BEnemy.BossbulletFrame > 9)
+                    {
+                        BEnemy.BossbulletFrame = 0;
+                    }
+                }
+
+                DrawTexture(BEnemy.BossImage[BEnemy.BossbulletFrame], BEnemy.x, BEnemy.y, WHITE);
+
+                BossBulletShooting(BEnemy,BossGun);
+
+                BossBulletAndPlayerCollision(BEnemy, S, P, B);
+            }
+            else
+            {
+                BEnemy.BossDefeated = true;
+            }
+            if (BEnemy.BossDefeated==true)
+            {
+                BEnemy.BossDefeatTimer++;
+
+                if (BEnemy.BossDefeatTimer % 10 == 0)
+                {
+                    BEnemy.BossDefeatFrame++;
+                    if (BEnemy.BossDefeatFrame > 7)
+                    {
+                        BEnemy.BossDefeatFrame = 7;
+                        EndingMenu = true;
+                    }
+                }
+
+                DrawTexture(BEnemy.BossDefeatImage[BEnemy.BossDefeatFrame], BEnemy.x, BEnemy.y, WHITE);
+            }
+        }
+
+
 
         if (IsKeyDown(KEY_D))
         {
@@ -586,10 +866,14 @@ int main()
                     LegFrame = 1;
                 }
             }
-            b1.ci -= 3;
-            b2.ci -= 3;
-            E.x -= 3;
-            EnemyMan.x -= 3;
+            if(level<3)
+
+            {
+                b1.ci -= 3;
+                b2.ci -= 3;
+                E.x -= 3;
+                EnemyMan.x -= 3;
+            }
             if (level == 2) {
                 E.x -= 1;
                 EnemyMan.x -= 1;
@@ -620,14 +904,16 @@ int main()
             Jump = false;
         }
 
-        Rectangle PlayerR = { (float)P.x[0],(float)P.y[0],(float)TotalPlayerWidth - 30,(float)TotalPlayerHeight - 130 };
-        Rectangle EnemyR = { (float)E.x + 15,(float)E.y,(float)E.EWidth - 30,(float)E.EHeight };
-        Rectangle EnemyManR = { (float)EnemyMan.x,(float)EnemyMan.y,(float)EnemyMan.EWidth - 10,(float)EnemyMan.EHeight };
+        E.ECollider = { (float)E.x + 15,(float)E.y,(float)E.EWidth - 30,(float)E.EHeight };
+        EnemyMan.ECollider = { (float)EnemyMan.x,(float)EnemyMan.y,(float)EnemyMan.EWidth - 10,(float)EnemyMan.EHeight };
         Rectangle HelicopterR = { (float)Helicopter.x + 16,(float)Helicopter.y,(float)Helicopter.EWidth + 30,(float)Helicopter.EHeight - 80 };
+        BEnemy.BossCollider= { (float)BEnemy.x,(float)BEnemy.y,(float)BEnemy.BossWidth,(float)BEnemy.BossHeight};
 
         if (IsKeyPressed(KEY_SPACE))
         {
             ShootHappen = true;
+
+
             PlaySound(BulletSound);
 
             for (int i = 0; i < MAX_BULLETS; i++)
@@ -646,6 +932,8 @@ int main()
         if (IsKeyPressed(KEY_E))
         {
             ShootHappen = true;
+
+
             PlaySound(BulletSound);
 
             for (int i = 0; i < MAX_BULLETS; i++)
@@ -666,7 +954,8 @@ int main()
             }
         }
 
-        PlayerBulletAndEnemyCollisionCheck(bullets, score, E, EnemyMan, Helicopter, EnemyR, EnemyManR, HelicopterR);
+
+        PlayerBulletAndEnemyCollisionCheck(bullets, score, E, EnemyMan, Helicopter,BEnemy, E.ECollider, EnemyMan.ECollider, HelicopterR,BEnemy.BossCollider,level);
 
 
         if (P.PHealth <= 0) {
@@ -676,6 +965,24 @@ int main()
                 BeginDrawing();
                 ClearBackground(BLACK);
                 DrawText("GAME OVER", ScreenWidth / 2 - 100, ScreenHeight / 2 - 100, 40, RED);
+                DrawText("Press escape to exit", ScreenWidth / 2 - 120, ScreenHeight / 2 - 120 + 60, 30, WHITE);
+
+                EndDrawing();
+
+            }
+
+            break;
+        }
+
+        if (EndingMenu==true) 
+        {
+            DrawText("YOU DEFEATED THE BOSS! ", ScreenWidth / 2 - 100, ScreenHeight / 2, 40, RED);
+            EndDrawing();
+            while (!IsKeyPressed(KEY_ESCAPE)) 
+            {
+                BeginDrawing();
+                ClearBackground(BLACK);
+                DrawText("YOU WIN...", ScreenWidth / 2 - 100, ScreenHeight / 2 - 100, 40, RED);
                 DrawText("Press escape to exit", ScreenWidth / 2 - 120, ScreenHeight / 2 - 120 + 60, 30, WHITE);
 
                 EndDrawing();
@@ -704,21 +1011,25 @@ int main()
             b2.ci *= -1;
         }
 
-        if (E.x <= 0)
+        if (E.x <= 0)  //E.x <= 0 && level<3   for easier testing
         {
             RespawnEnemy(E);
         }
-        if (EnemyMan.x <= 0)
+        if (EnemyMan.x <= 0)  //EnemyMan.x <= 0 && level < 3
         {
             RespawnEnemy(EnemyMan);
         }
-        if (Helicopter.x <= 0)
+        if (Helicopter.x <= 0 && level==2)
         {
             RespawnHelicopter(Helicopter);
         }
         DrawText(TextFormat("SCORE: %d", score), ScreenWidth - 200, 15, 20, WHITE);
 
         HealthBar(P);
+        if(level==3)
+        {
+            BossHealth(BEnemy);
+        }
 
         EndDrawing();
 
